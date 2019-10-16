@@ -1,7 +1,8 @@
 module Parser (parseFormat) where
 
 import Text.ParserCombinators.Parsec
-import Rename (Format(..), FileInfo, identifiers, getTransform)
+
+import Format (Format(..), identifiers)
 
 -- parsing special identifiers
 
@@ -26,5 +27,5 @@ constant = Const <$> many1 (noneOf "{}")
 format :: GenParser Char st [Format]
 format = many1 $ (special <|> constant)
 
-parseFormat :: String -> Either ParseError (IO (FileInfo -> FilePath))
-parseFormat str = getTransform <$> parse format "(unknown)" str
+parseFormat :: String -> Either ParseError [Format]
+parseFormat = parse format "(unknown)"
