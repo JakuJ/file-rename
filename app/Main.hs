@@ -2,6 +2,7 @@ module Main where
 
 import System.Environment (getArgs)
 import Control.Monad (forM_)
+import System.Directory (withCurrentDirectory)
 
 import ParseArgs (parseArgs, listFilenames, buildTransformer, buildRenamer)
 import Rename (newFilepaths, renameWith)
@@ -15,4 +16,4 @@ main = do
     forM_ fileLists $ \(dir, files) -> do
         putStrLn $ "Processing directory: " ++ dir
         let namePairs = zip files $ newFilepaths files transformer
-        renameWith renamer namePairs
+        withCurrentDirectory dir $ renameWith renamer namePairs

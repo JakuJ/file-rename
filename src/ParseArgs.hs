@@ -8,9 +8,8 @@ module ParseArgs (
 import System.IO (hPutStrLn, stderr)
 import System.Console.GetOpt (OptDescr (..), ArgDescr (..), ArgOrder (..), getOpt, usageInfo)
 import System.Exit (exitWith, ExitCode (..))
-import System.Directory (renameFile)
+import System.Directory (renameFile, doesPathExist)
 import Control.Monad (when, guard, liftM)
-import System.Posix.Files (fileExist)
 import Data.List (sort, nub)
 import System.Directory (listDirectory)
 
@@ -52,7 +51,7 @@ parseArgs argv = case getOpt Permute flags argv of
         exitWith msg = hPutStrLn stderr msg >> exit
         failWith msg = hPutStrLn stderr msg >> die
         header = "Usage: rename -vhe --dry-run [-d directory] [format string]"
-        version = "rename version 1.3"
+        version = "rename version 1.4"
         usage = usageInfo header flags
 
 listFilenames :: [Flag] -> IO [(FilePath, [FilePath])]
@@ -75,7 +74,7 @@ buildRenamer :: [Flag] -> (FilePath -> FilePath -> IO ())
 buildRenamer flags
     | Dry `elem` flags = log
     | otherwise = \old new -> do
-        guard =<< not <$> fileExist new
+        guard =<< not <$> doesPathExist new
         log old new
         renameFile old new
     where

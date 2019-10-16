@@ -16,13 +16,13 @@ identifiers = ["name", "number", "date"]
 
 data FileInfo = FileInfo {name :: String, extension :: String, number :: Int}
 
-getFun :: Format -> IO (FileInfo -> FilePath)
+getFun :: Format -> IO (FileInfo -> String)
 getFun (Const str) = return $ const str
 getFun (Special "name") = return name
 getFun (Special "number") = return $ show . number
 getFun (Special "date") = const <$> show . utctDay <$> getCurrentTime
 
-getTransformer :: [Format] -> IO (FileInfo -> FilePath)
+getTransformer :: [Format] -> IO (FileInfo -> String)
 getTransformer formats = do
     funs <- mapM getFun formats
     return $ \fi -> concatMap ($ fi) funs
