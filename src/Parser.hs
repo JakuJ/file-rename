@@ -22,10 +22,10 @@ special = braces identifier
 -- parsing the rest
 
 constant :: GenParser Char st Format
-constant = Const <$> many1 (noneOf "{}")
+constant = Const <$> many1 (try $ noneOf "{}")
 
 format :: GenParser Char st [Format]
-format = many1 $ (special <|> constant)
+format = manyTill (special <|> constant) eof
 
 parseFormat :: String -> Either ParseError [Format]
 parseFormat = parse format "(unknown)"
