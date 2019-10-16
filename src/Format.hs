@@ -1,8 +1,8 @@
 module Format (
     Format (..),
-    FileInfo (FileInfo),
+    FileInfo (..),
     identifiers,
-    getTransform
+    getTransformer
 ) where
 
 import System.Posix.Files (getFileStatus, fileSize)
@@ -22,7 +22,7 @@ getFun (Special "name") = return name
 getFun (Special "number") = return $ show . number
 getFun (Special "date") = const <$> show . utctDay <$> getCurrentTime
 
-getTransform :: [Format] -> IO (FileInfo -> FilePath)
-getTransform formats = do
+getTransformer :: [Format] -> IO (FileInfo -> FilePath)
+getTransformer formats = do
     funs <- mapM getFun formats
-    return $ \fi -> concatMap ($ fi) funs ++ extension fi
+    return $ \fi -> concatMap ($ fi) funs
