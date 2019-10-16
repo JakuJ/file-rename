@@ -1,34 +1,37 @@
-module Rename (Format(..), identifiers, getTransform, renameFiles) where
+module Rename (Format(..), FileInfo, identifiers, getTransform, renameFiles) where
 
-import System.Posix.Files
 import System.Directory (listDirectory, renameFile)
-import Data.Time
+import System.Posix.Files (getFileStatus, fileSize)
+import System.FilePath.Posix (takeFileName, takeExtension)
+import Data.Time (utctDay, getCurrentTime)
+
+data FileInfo = FileInfo {name :: String, extension :: String, number :: Int}
+
+mkFileInfo :: FilePath -> Int -> FileInfo
+mkFileInfo fp = FileInfo (takeFileName fp) (takeExtension fp)
+
+renameFiles :: (FileInfo -> FilePath) -> IO ()
+renameFiles f = do
+    files <- listDirectory "."
+    let infos = zipWith mkFileInfo files [1..]
+    let newFiles = map f infos
+    mapM_ (uncurry renameFile) $ zip files newFiles
+    
+-- parsing special identifiers
 
 data Format = Special String | Const String
     deriving (Show)
 
--- parsing special identifiers
-
 identifiers :: [String]
 identifiers = ["name", "number", "date", "size"]
 
--- the rename function
-renameFiles :: (FilePath -> FilePath) -> IO ()
-renameFiles f = do
-    files <- listDirectory "."
-    let newFiles = map f files
-    mapM_ (uncurry renameFile) $ zip files newFiles
-
--- format to transformation function
-
-getFun :: Format -> IO (FilePath -> FilePath)
+getFun :: Format -> IO (FileInfo -> FilePath)
 getFun (Const str) = return $ const str
-getFun (Special "name") = return id
-getFun (Special "number") = return $ const "_num_" -- !
+getFun (Special "name") = return name
+getFun (Special "number") = return $ show . number
 getFun (Special "date") = const <$> show . utctDay <$> getCurrentTime
--- getFun (Special "size") = (fileSize <$> getFileStatus)
 
-getTransform :: [Format] -> IO (FilePath -> FilePath)
+getTransform :: [Format] -> IO (FileInfo -> FilePath)
 getTransform formats = do
     funs <- mapM getFun formats
-    return $ \fp -> concatMap ($ fp) funs
+    return $ \fi -> concatMap ($ fi) funs ++ extension fi
