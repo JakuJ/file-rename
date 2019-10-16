@@ -1,11 +1,8 @@
 module Rename (
     newFilepaths,
-    renameFiles
+    renameWith
 ) where
 
-import Control.Monad (forM_, guard)
-import System.Posix.Files (fileExist)
-import System.Directory (renameFile)
 import System.FilePath.Posix (takeFileName, takeExtension)
 
 import Format (FileInfo (FileInfo))
@@ -18,8 +15,5 @@ newFilepaths files = flip map infos
     where
         infos = zipWith mkFileInfo files [1..]
 
-renameFiles :: [(FilePath, FilePath)] -> IO ()
-renameFiles pairs = forM_ pairs $ \(old, new) -> do
-    guard =<< not <$> fileExist new
-    putStrLn $ old ++ " -> " ++ new
-    renameFile old new
+renameWith :: (FilePath -> FilePath -> IO ()) -> [(FilePath, FilePath)] -> IO ()
+renameWith renamer = mapM_ $ uncurry renamer
