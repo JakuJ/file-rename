@@ -24,7 +24,7 @@ The program will halt if changing a name would overwrite another file.
 
 ## Usage
 
-`rename -vh [format ..]`
+`rename -vhe --dry-run [-d directory] [format string]`
 
 ## Examples
 
@@ -37,5 +37,5 @@ We would get these results:
 
 * `rename {name}` -> [abc.jpg, def.pdf, ghi.xml] (no change)
 * `rename file_{number}` -> [file_1.jpg, file_2.pdf, file_3.xml]
-* `rename {name}_{number}` -> [abc_1.jpg, def_2.pdf, ghi_3.xml]
+* `rename -e {name}_{number}` -> [abc_1, def_2, ghi_3]
 * `rename "{name} ({date})"` -> "abc (2019-10-16).jpg" and so on

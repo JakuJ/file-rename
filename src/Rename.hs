@@ -3,12 +3,12 @@ module Rename (
     renameWith
 ) where
 
-import System.FilePath.Posix (takeFileName, takeExtension)
+import System.FilePath.Posix (takeBaseName, takeExtension)
 
 import Format (FileInfo (FileInfo))
 
 mkFileInfo :: FilePath -> Int -> FileInfo
-mkFileInfo fp = FileInfo (takeFileName fp) (takeExtension fp)
+mkFileInfo fp = FileInfo (takeBaseName fp) (takeExtension fp)
 
 newFilepaths :: [FilePath] -> (FileInfo -> FilePath) -> [FilePath]
 newFilepaths files = flip map infos
