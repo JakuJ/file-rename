@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module ParseArgs (
     parseArgs,
     listFilenames,
@@ -57,8 +55,8 @@ parseArgs argv = case getOpt Permute flags argv of
         version = "rename version 1.3"
         usage = usageInfo header flags
 
-listFilenames :: [Flag] -> IO [FilePath]
-listFilenames flags = concat <$> mapM (liftM sort . listDirectory) dirs
+listFilenames :: [Flag] -> IO [(FilePath, [FilePath])]
+listFilenames flags = zip dirs <$> mapM (liftM sort . listDirectory) dirs
     where
         dirs = if null flag_dirs then ["."] else flag_dirs
         flag_dirs = [dir | Directory dir <- flags]
