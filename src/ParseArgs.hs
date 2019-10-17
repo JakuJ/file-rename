@@ -8,10 +8,10 @@ module ParseArgs (
 import System.IO (hPutStrLn, stderr)
 import System.Console.GetOpt (OptDescr (..), ArgDescr (..), ArgOrder (..), getOpt, usageInfo)
 import System.Exit (exitWith, ExitCode (..))
-import System.Directory (renameFile, doesPathExist)
-import Control.Monad (when, guard, liftM)
+import System.Directory (renameFile, listDirectory, doesPathExist, doesFileExist)
+import System.FilePath.Posix ((</>), dropExtension)
+import Control.Monad (when, guard, liftM, filterM)
 import Data.List (sort, nub)
-import System.Directory (listDirectory)
 
 import Parser (parseFormat)
 import Format (FileInfo (..), getTransformer)
@@ -23,7 +23,7 @@ die = exitWith (ExitFailure 1)
 data Flag 
     = Directory {directory :: String} 
     | Extension | Dry | Version | Help
-    deriving (Eq)
+    deriving (Eq, Show)
 
 flags :: [OptDescr Flag]
 flags =
@@ -51,12 +51,13 @@ parseArgs argv = case getOpt Permute flags argv of
         exitWith msg = hPutStrLn stderr msg >> exit
         failWith msg = hPutStrLn stderr msg >> die
         header = "Usage: rename -vhe --dry-run [-d directory] [format string]"
-        version = "rename version 1.4"
+        version = "rename version 1.5"
         usage = usageInfo header flags
 
-listFilenames :: [Flag] -> IO [(FilePath, [FilePath])]
-listFilenames flags = zip dirs <$> mapM (liftM sort . listDirectory) dirs
+listFilenames :: [Flag] -> IO [[FilePath]]
+listFilenames flags = mapM (liftM sort . files) dirs
     where
+        files dir = filterM doesFileExist =<< (liftM (dir </>)) <$> listDirectory dir
         dirs = if null flag_dirs then ["."] else flag_dirs
         flag_dirs = [dir | Directory dir <- flags]
 
@@ -66,8 +67,8 @@ buildTransformer flags format = do
         Left err -> print err >> die
         Right fmts -> getTransformer fmts
     
-    return $ if not (Extension `elem` flags)
-            then \fi -> fun fi ++ extension fi
+    return $ if (Extension `elem` flags)
+            then dropExtension . fun
             else fun
 
 buildRenamer :: [Flag] -> (FilePath -> FilePath -> IO ())
