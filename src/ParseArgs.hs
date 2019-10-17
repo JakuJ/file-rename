@@ -8,7 +8,7 @@ module ParseArgs (
 import System.IO (hPutStrLn, stderr)
 import System.Console.GetOpt (OptDescr (..), ArgDescr (..), ArgOrder (..), getOpt, usageInfo)
 import System.Exit (exitWith, ExitCode (..))
-import System.Directory (renameFile, listDirectory, doesPathExist, doesFileExist)
+import System.Directory (renamePath, listDirectory, doesPathExist, doesFileExist)
 import System.FilePath.Posix ((</>), dropExtension)
 import Control.Monad (when, guard, liftM, filterM)
 import Data.List (sort, nub)
@@ -22,7 +22,7 @@ die = exitWith (ExitFailure 1)
 
 data Flag 
     = Directory {directory :: String} 
-    | Extension | Dry | Version | Help
+    | Extension | AllowDirs | DryRun | Version | Help
     deriving (Eq, Show)
 
 flags :: [OptDescr Flag]
@@ -31,7 +31,9 @@ flags =
             "Directory to rename files in - defaults to the current one"
     ,Option ['e'] [] (NoArg Extension)
             "Don't preserve file extensions"
-    ,Option [] ["dry", "dry-run"] (NoArg Dry)
+    ,Option [] ["allow-dirs"] (NoArg AllowDirs)
+            "Also rename directories"
+    ,Option [] ["dry", "dry-run"] (NoArg DryRun)
             "Don't rename files, just print new names"
     ,Option ['v'] ["version"] (NoArg Version)
             "Print version number"
@@ -51,13 +53,14 @@ parseArgs argv = case getOpt Permute flags argv of
         exitWith msg = hPutStrLn stderr msg >> exit
         failWith msg = hPutStrLn stderr msg >> die
         header = "Usage: rename -vhe --dry-run [-d directory] [format string]"
-        version = "rename version 1.5"
+        version = "rename version 1.6"
         usage = usageInfo header flags
 
 listFilenames :: [Flag] -> IO [[FilePath]]
 listFilenames flags = mapM (liftM sort . files) dirs
     where
-        files dir = filterM doesFileExist =<< (liftM (dir </>)) <$> listDirectory dir
+        files dir = filterM pathFilter =<< (liftM (dir </>)) <$> listDirectory dir
+        pathFilter = if AllowDirs `elem` flags then doesPathExist else doesFileExist
         dirs = if null flag_dirs then ["."] else flag_dirs
         flag_dirs = [dir | Directory dir <- flags]
 
@@ -73,10 +76,10 @@ buildTransformer flags format = do
 
 buildRenamer :: [Flag] -> (FilePath -> FilePath -> IO ())
 buildRenamer flags
-    | Dry `elem` flags = log
+    | DryRun `elem` flags = log
     | otherwise = \old new -> do
         guard =<< not <$> doesPathExist new
         log old new
-        renameFile old new
+        renamePath old new
     where
         log old new = putStrLn $ old ++ " -> " ++ new
