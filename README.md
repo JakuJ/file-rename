@@ -24,7 +24,7 @@ The program will halt if changing a name would overwrite another file.
 
 ## Usage
 
-`rename -vhe --dry-run [-d directory] [format string]`
+`rename -vhe --dry-run [-p pattern] [format string]`
 
 ## Examples
 

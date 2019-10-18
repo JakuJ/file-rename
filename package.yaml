@@ -1,5 +1,5 @@
 name:                file-rename
-version:             1.6.0.0
+version:             1.7.0.0
 github:              "JakuJ/file-rename"
 license:             BSD3
 author:              "Jakub Janaszkiewicz"
@@ -25,6 +25,7 @@ dependencies:
 - parsec
 - time
 - filepath
+- Glob
 
 library:
   source-dirs: src
